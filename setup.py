@@ -15,10 +15,10 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name='ogc',
+    name='ogcext',
     version = VERSION,
     description='OGC custom utilities',
-    packages=['ogc'],
+    packages=['ogcext'],
     include_package_data=True,
     author='Rob Atkinson',
     author_email='rob@metalinkage.com,au',
