@@ -35,7 +35,7 @@ def load_rdf_mappings(url_base):
     """
     
     (object_type,created) = ObjectType.objects.get_or_create(uri="ogc:ApplicationSchema", defaults = { "label" : "Application Schema" })
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     sm = ObjectMapping.new_mapping(object_type, "rdf_io:ImportedResource", "AppSchema", "graph", "graph" , filter='resource_type="CLASS"' , auto_push=False)
     # specific mapping
     am = AttributeMapping(scope=sm, attr="description", predicate="rdfs:comment", is_resource=False).save()
