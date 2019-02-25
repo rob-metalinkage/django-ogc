@@ -66,7 +66,7 @@ class GMLDict(ImportedConceptScheme):
         
     def extract_gmx_as_skos(self,tree,xpaths):
         """Extract a GML or GMX dictionary as a SKOS RDf model"""
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         nsmap= { 'gml': 'http://www.opengis.net/gml/3.2'  , 'gmx' : 'http://www.isotc211.org/2005/gmx' }
         tgt = self.target_scheme
         if not tgt :
