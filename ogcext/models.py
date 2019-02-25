@@ -6,6 +6,12 @@ from skosxl.models import *
 
 from django.utils.encoding import python_2_unicode_compatible
 
+try:
+    # python 3
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+    
 from lxml import etree, objectify
 from rdflib import Graph, URIRef, Literal, Namespace
 # from skosxl.models import *
@@ -54,8 +60,13 @@ class GMLDict(ImportedConceptScheme):
 
     pass
     
+    class Meta:
+        verbose_name ="GML Dictionary (XML)"
+        verbose_name_plural = "GML Dictionaries"
+        
     def extract_gmx_as_skos(self,tree,xpaths):
         """Extract a GML or GMX dictionary as a SKOS RDf model"""
+        import pdb; pdb.set_trace()
         nsmap= { 'gml': 'http://www.opengis.net/gml/3.2'  , 'gmx' : 'http://www.isotc211.org/2005/gmx' }
         tgt = self.target_scheme
         if not tgt :
@@ -76,9 +87,11 @@ class GMLDict(ImportedConceptScheme):
             if not graph :
                 graph = Graph()
                 graph.namespace_manager.bind('skos', Namespace('http://www.w3.org/2004/02/skos/core#'), override=False)
-            id = self.get_id(tgt,codelist,nsmap) 
-            if not tgt.endswith(id):
-                uri = URIRef("/".join((tgt,id)) )
+            id = self.get_id(None,codelist,nsmap,needuri=False) 
+ #           uri= URIRef( id ) 
+ #           if not urlparse(id).scheme in ('http','https'):
+ #               if not tgt.endswith(id):
+ #                   uri = URIRef("/".join((tgt,id)) )
             graph.add ( (uri, RDFTYPE_NODE , SCHEME_NODE) )
             graph.add ( (uri, RDFSLABEL_NODE , Literal(id) ) )
             try:
@@ -90,7 +103,9 @@ class GMLDict(ImportedConceptScheme):
                     
                    graph.add ( (uri, NOTATION_NODE , Literal(code.text, datatype=OGC_URN_TYPE ) ) )
             for concept in codelist.xpath(xpaths['Definition'],namespaces=nsmap):
-                id = self.get_id(tgt,concept,nsmap)
+                id = self.get_id(str(uri),concept,nsmap)
+                if not urlparse(id).scheme in ('http','https'):
+                    id = "/".join((str(uri),id))
                 duri = URIRef(id )
                 graph.add ( (duri, RDFTYPE_NODE  , CONCEPT_NODE ) )
                 try:
@@ -106,16 +121,23 @@ class GMLDict(ImportedConceptScheme):
             #print codelist.find('./gml:description',namespaces=nsmap).text
         return graph
        
-    def get_id(self,uribase,node,nsmap): 
+    def get_id(self,uribase,node,nsmap, needuri=True): 
+        """ Get id from gml:identifier if @codespace a valid HTTP namespace 
+        
+            revert to using gml:id if not possible
+        """
         gmlid= node.xpath('./gml:identifier',namespaces=nsmap)
         if gmlid:
             id = gmlid[0].xpath('@codeSpace')[0]
-            if not id[:-1] in '#/':
-                id = id +'/' 
-            id = id + gmlid[0].text
-        else:
-            id = tgt
-            if not id[:-1] in '#/':
-                id = id +'/' 
-            id = id + node.xpath('./@gml:id',namespaces=nsmap)[0]
+            if not needuri or urlparse(id).scheme in ('http','https'):
+                if not id[:-1] in '#/':
+                    id = id +'/' 
+                id = id + gmlid[0].text
+                return id
+        # FALL THROUGH TO FORCE USE OF GML:ID
+        id = uribase
+        if not id[:-1] in '#/':
+            id = id +'/' 
+        id = id + node.xpath('./@gml:id',namespaces=nsmap)[0]
         return id
+        
