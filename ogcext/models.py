@@ -37,6 +37,9 @@ GML32_MAP= { 'Dictionary': '//gml:Dictionary' ,
   
 class GMLDict(ImportedConceptScheme):
 
+    def __unicode__(self):
+        return ( ' '.join( filter(None,('GMLDict:', self.description, '<',self.remote, '>' ))))
+        
     def save(self,*args,**kwargs):  
         #import pdb; pdb.set_trace()
         # save file - but doesnt parse it
