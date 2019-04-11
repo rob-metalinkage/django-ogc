@@ -20,5 +20,5 @@ from . import views
 
 urlpatterns = [
     url(r'manage/init$', views.loadinit, name='loadinit'),
-    
+    url(r'manage/loaddocs$', views.loaddocreg, name='loaddocs'),   
 ]
