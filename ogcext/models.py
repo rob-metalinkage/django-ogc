@@ -5,6 +5,7 @@ from django.db import models
 from skosxl.models import *
 
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import ugettext_lazy as _
 
 try:
     # python 3
@@ -34,7 +35,91 @@ GMX_MAP = { 'Dictionary': '//gmx:CodeListDictionary' ,
     'Definition' : '//gmx:CodeDefinition'}
 GML32_MAP= { 'Dictionary': '//gml:Dictionary' ,
   'Definition' : '//gml:Definition'}
+
   
+class SensorParameter(Concept):
+    """ A sensor parameter is measured by a sensor type.
+    
+    This may be referenced by either an "observation procedure" or an "observed property". Parameters may be organised into generalisation hierarchies. Uses unadorned SKOS model, but may be extended later, for example to define UoM, precision etc. """
+    
+    class Meta :
+        verbose_name="Sensed Parameter"
+        verbose_name_plural="Sensed Parameters"
+        
+        
+class SensorModel(Concept):
+    class Meta :
+        verbose_name="Sensor Model"
+        verbose_name_plural="Sensor Models"
+    
+    senses = models.ManyToManyField( "sensorparameter",symmetrical=False,
+        verbose_name=(_('parameters sensed')),
+        help_text=_('References observable parameters sensed by this sensor. This should be the most specific reference available, allowing inferencing to identify the more general terms relevant to this parameter'))
+
+class SensorModelSource(ImportedConceptScheme):
+    class Meta :
+        verbose_name='sensor model register'
+  
+    def save(self,*args,**kwargs):  
+        # save first - to make file available
+ 
+        if not self.force_bulk_only :
+            target_repo = self.target_repo
+            self.target_repo = None
+            super(SensorModelSource, self).save(*args,**kwargs)
+            self.target_repo = target_repo
+        else:
+            super(SensorModelSource, self).save(*args,**kwargs)
+        parsedRDF = self.get_graph()
+        # import the basic SKOS elements of the scheme using the era subclasses
+        # def importScheme(self,gr, target_scheme,  force_refresh, schemegraph, schemeClass=Scheme, conceptClass=Concept,schemeDefaults={}, classDefaults={} ):
+    
+        scheme_objs_found = self.importSchemes(parsedRDF,self.target_scheme, self.force_refresh, schemeClass=Scheme, conceptClass=SensorModel, schemeDefaults={})
+        # now process the specialised extension elements
+        for scheme_obj in scheme_objs_found:
+            self.getParams(scheme_obj,parsedRDF)
+        
+    def getParams(self, scheme_obj, gr):
+        for c in self.getConcepts(URIRef(scheme_obj.uri),gr):
+            try:
+                sensor = SensorModel.objects.get(uri=str(c))
+                #sensor.save()
+            except Exception as e:
+                print "Could not process parameters sensed by sensor %s , %s " % (c,e)
+
+class SensorParameterSource(ImportedConceptScheme):
+    class Meta :
+        verbose_name='sensor parameter register'
+  
+    def save(self,*args,**kwargs):  
+        # save first - to make file available
+ 
+        if not self.force_bulk_only :
+            target_repo = self.target_repo
+            self.target_repo = None
+            super(SensorParameterSource, self).save(*args,**kwargs)
+            self.target_repo = target_repo
+        else:
+            super(SensorParameterSource, self).save(*args,**kwargs)
+        parsedRDF = self.get_graph()
+        # import the basic SKOS elements of the scheme using the era subclasses
+        # def importScheme(self,gr, target_scheme,  force_refresh, schemegraph, schemeClass=Scheme, conceptClass=Concept,schemeDefaults={}, classDefaults={} ):
+    
+        scheme_objs_found = self.importSchemes(parsedRDF,self.target_scheme, self.force_refresh, schemeClass=Scheme, conceptClass=SensorParameter, schemeDefaults={})
+        # now process the specialised extension elements
+        for scheme_obj in scheme_objs_found:
+            self.getParams(scheme_obj,parsedRDF)
+        
+    def getParams(self, scheme_obj, gr):
+        for c in self.getConcepts(URIRef(scheme_obj.uri),gr):
+            try:
+                param = SensorParameter.objects.get(uri=str(c))
+                #sensor.save()
+            except Exception as e:
+                print "Could not process parameters sensed by sensor %s , %s " % (c,e)
+
+                
+                
 class GMLDict(ImportedConceptScheme):
 
     def __unicode__(self):
