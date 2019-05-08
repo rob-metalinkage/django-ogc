@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 
 from django.http import HttpResponse
 import json
-
+import requests
 
 
 from importlib import import_module
@@ -36,35 +36,54 @@ def loaddocreg(req):
     
     Will assume the doc register also includes non-OGC - so two collections created at the top - OGC docs and normative references.
     Also flag those that are specifications, so they can be used in specification-related logic, such as candidates for profiles."""
-    
+ 
+    if req.GET.get('pdb') :
+        import pdb; pdb.set_trace()
+        
     if req.GET.get('stats') :
         statsonly = True
     else:
         statsonly = False
         
     tgt="http://www.opengis.net/def/docs" 
-    src='/repos/ogc/ogc-na/sources/docregister/docs.php.js'
+    if req.GET.get('file'):
+        src='/repos/ogc/ogc-na/sources/docregister/docs.php.js'
+        with open(src, 'r') as f:
+            docs_dict = json.load(f)
+    else:
+        if req.GET.get('src'):
+            src=req.GET.get('src')
+        else:
+            src='https://portal.opengeospatial.org/public_ogc/api/docs.php?CITE=1'
+        with requests.get(src) as f:
+            docs_dict = f.json()
+
     creator = GenericMetaProp.objects.get(uri='http://purl.org/dc/elements/1.1/creator')
     contributor =GenericMetaProp.objects.get(uri= 'http://purl.org/dc/elements/1.1/contributor')
     seealso = GenericMetaProp.objects.get(uri= 'http://www.w3.org/2000/01/rdf-schema#seeAlso') 
     
     ( docscheme, created ) = Scheme.objects.get_or_create(uri=tgt, defaults={'pref_label':'OGC Documents' , 'changenote': 'loaded from %s ' % (src ,) , 'definition':'OGC document register with annotations and links'} )  
-#    import pdb; pdb.set_trace()
+    
 
     if ( not created ) : 
         Concept.objects.filter(scheme=docscheme).delete()
-    with open(src, 'r') as f:
-        docs_dict = json.load(f)
+    
     
     publishers= {} 
     uri={}
     response = HttpResponse()
-    for doc in docs_dict.values():
+    max = -1
+    if req.GET.get('max'):
+        max=int(req.GET.get('max'))
+    
+    for num,doc in enumerate(docs_dict.values()):
+        if num == max:
+            break
+        if publishers.get(doc['publisher']) :
+            publishers[doc['publisher']] = publishers[doc['publisher']] +1 
+        else:
+            publishers[doc['publisher']] = 1
         if statsonly :
-            if publishers.get(doc['publisher']) :
-                publishers[doc['publisher']] = publishers[doc['publisher']] +1 
-            else:
-                publishers[doc['publisher']] = 1
             uri[ doc['URI'] ] = True
         else:
             (d, created) = Concept.objects.get_or_create(term=doc['identifier'], definition=doc['description'], pref_label=doc['title'] , scheme=docscheme)
@@ -81,7 +100,7 @@ def loaddocreg(req):
             if doc.get('alternative') :
                 Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['alternative'])
                 
-    response.write( { 'publishers' : publishers , 'uri' : uri } )
+    response.write( { 'count': num , 'publishers' : publishers , 'uri' : uri } )
     return response
         
     
