@@ -7,7 +7,8 @@ from django.shortcuts import get_object_or_404
 # from django.views.generic.list_detail import object_list
 # but not used anyway?
 # if needed.. from django.views.generic import ListView
-
+from django.utils.text import slugify
+from django.utils.html import strip_tags
 from django.http import HttpResponse
 import json
 import requests
@@ -67,6 +68,7 @@ def loaddocreg(req):
 
     if ( not created ) : 
         Concept.objects.filter(scheme=docscheme).delete()
+        Collection.objects.filter(scheme=docscheme).delete()
     
     
     publishers= {} 
@@ -86,11 +88,11 @@ def loaddocreg(req):
         if statsonly :
             uri[ doc['URI'] ] = True
         else:
-            (d, created) = Concept.objects.get_or_create(term=doc['identifier'], definition=doc['description'], pref_label=doc['title'] , scheme=docscheme)
+            (d, created) = Concept.objects.get_or_create(term=slugify(doc['identifier']), definition=strip_tags(doc['description']).translate( {ord(c):None for c in '\n\t\r' }).encode('ascii',errors='ignore'), pref_label=doc['title'].encode('ascii',errors='ignore') , scheme=docscheme)
             (collection,created) = Collection.objects.get_or_create(scheme=docscheme, pref_label=doc['type'] , uri="/".join((tgt,doc['type'].lower())))
             CollectionMember.objects.get_or_create(collection=collection, concept=d)
      
-            Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['identifier'])
+            Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['identifier'].encode('utf-8'))
             if doc.get('creator') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=creator, value=doc['creator'] )
             if doc.get('contributor') : 
