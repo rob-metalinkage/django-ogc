@@ -92,7 +92,10 @@ def loaddocreg(req):
             (collection,created) = Collection.objects.get_or_create(scheme=docscheme, pref_label=doc['type'] , uri="/".join((tgt,doc['type'].lower())))
             CollectionMember.objects.get_or_create(collection=collection, concept=d)
      
+            Notation.objects.get_or_create(concept=d,code=doc.get('identifier'), codetype="http://www.opengis.net/def/metamodel/ogc-na/doc_no")
             Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['identifier'].encode('utf-8'))
+            if doc.get('spec_id') :
+                Notation.objects.get_or_create(concept=d,code=doc.get('spec_id'), codetype="http://www.opengis.net/def/metamodel/ogc-na/cite_spec_id")
             if doc.get('creator') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=creator, value=doc['creator'] )
             if doc.get('contributor') : 
