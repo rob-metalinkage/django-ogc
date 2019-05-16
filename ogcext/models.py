@@ -7,11 +7,16 @@ from skosxl.models import *
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
+
+from urllib2 import urlopen
+    
 try:
     # python 3
     from urllib.parse import urlparse
+
 except ImportError:
     from urlparse import urlparse
+#   from urllib.request import urlopen
     
 from lxml import etree, objectify
 from rdflib import Graph, URIRef, Literal, Namespace
@@ -123,16 +128,18 @@ class SensorParameterSource(ImportedConceptScheme):
 class GMLDict(ImportedConceptScheme):
 
     def __unicode__(self):
-        return ( ' '.join( filter(None,('GMLDict:', self.description, '<',self.remote, '>' ))))
+        return ( ' '.join( filter(None,('GMLDict:', self.description, '<',self.remote, str(self.file), '>' ))))
         
     def save(self,*args,**kwargs):  
         #import pdb; pdb.set_trace()
         # save file - but doesnt parse it
+#        super(GMLDict, self).save(*args,**kwargs)
         ImportedResource.save(self,*args,**kwargs)
         if self.file :
             tree = etree.parse(self.file.name)
         elif self.remote :
-            tree = etree.parse(self.remote)
+            f = urlopen(self.remote)
+            tree = etree.parse(f)
         if tree.getroot().nsmap.get('gmx') :
             map=GMX_MAP
         elif tree.getroot().nsmap.get('gml') == 'http://www.opengis.net/gml/3.2' :
@@ -144,6 +151,7 @@ class GMLDict(ImportedConceptScheme):
             # print(self.schemes.all())
 
         # now SKOS imported should find graph as if parsed from RDF
+        kwargs['force_insert']=False
         super(GMLDict, self).save(*args,**kwargs)
 
     pass
