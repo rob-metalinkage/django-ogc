@@ -27,7 +27,7 @@ setup(
     zip_safe=False,
     install_requires = ['django-skosxl',
                         'django-rdf_io',
-                        'lxml', 'smuggler'   
+                        'lxml', 'django-smuggler'
                         ]
 
 )
