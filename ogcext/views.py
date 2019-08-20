@@ -106,7 +106,7 @@ def loaddocreg(req):
             if doc.get('contributor') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=contributor, value=doc['contributor'] )
             if doc.get('URL') : 
-                ConceptMeta.objects.get_or_create(subject=d, metaprop=seealso, value=doc['URL'] )
+                ConceptMeta.objects.get_or_create(subject=d, metaprop=seealso, value=doc['URL'].join(('<','>'))  )
             if doc.get('alternative') :
                 Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['alternative'])
                 
