@@ -91,7 +91,7 @@ def loaddocreg(req):
             uri[ doc['URI'] ] = True
         else:
             (d, created) = Concept.objects.get_or_create(term=slugify(doc['identifier']), definition=strip_tags(doc['description']).translate( {ord(c):None for c in '\n\t\r' }).encode('ascii',errors='ignore'), pref_label=doc['title'].encode('ascii',errors='ignore') , scheme=docscheme)
-            (collection,created) = Collection.objects.get_or_create(scheme=docscheme , uri="/".join((tgt,doc['type'].lower())))
+            (collection,created) = Collection.objects.get_or_create(scheme=docscheme , pref_label=doc['type'], uri="/".join((tgt,doc['type'].lower())))
             ConceptMeta.objects.get_or_create(subject=d, metaprop=doctype, value="".join(("<http://www.opengis.net/def/doc-type/",doc['type'].lower(),">") ) )
             
 #            CollectionMember.objects.get_or_create(collection=topcollection, subcollection=collection)
