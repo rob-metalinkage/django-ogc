@@ -48,7 +48,7 @@ def loaddocreg(req):
         
     tgt="http://www.opengis.net/def/docs" 
     if req.GET.get('file'):
-        src='/repos/ogc/ogc-na/sources/docregister/docs.php.js'
+        src='/repos/ogc/NamingAuthority/incubation/bibliography/bibliography.json'
         with open(src, 'r') as f:
             docs_dict = json.load(f)
     else:
@@ -110,7 +110,7 @@ def loaddocreg(req):
             if doc.get('alternative') :
                 Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['alternative'])
                 
-    response.write( { 'count': num , 'publishers' : publishers , 'uri' : uri } )
+    response.write( '<A HREF="/admin/skosxl/scheme/%d/change/" target="_new">Show Scheme' % ( docscheme.id, ) )
     return response
         
     
