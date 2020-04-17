@@ -6,10 +6,14 @@ from skosxl.models import *
 
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
-
+from rdf_io.models import ImportedResource
 
 from urllib2 import urlopen
-    
+
+
+import logging
+logger = logging.getLogger(__name__)
+  
 try:
     # python 3
     from urllib.parse import urlparse
@@ -40,6 +44,9 @@ GMX_MAP = { 'Dictionary': '//gmx:CodeListDictionary' ,
     'Definition' : '//gmx:CodeDefinition'}
 GML32_MAP= { 'Dictionary': '//gml:Dictionary' ,
   'Definition' : '//gml:Definition'}
+
+class AppSchema(ImportedResource):
+    verbose_name = 'Application Schema'
 
   
 class SensorParameter(Concept):
@@ -90,7 +97,7 @@ class SensorModelSource(ImportedConceptScheme):
                 sensor = SensorModel.objects.get(uri=str(c))
                 #sensor.save()
             except Exception as e:
-                print "Could not process parameters sensed by sensor %s , %s " % (c,e)
+                logger.info ("Could not process parameters sensed by sensor %s , %s " % (c,e))
 
 class SensorParameterSource(ImportedConceptScheme):
     class Meta :
@@ -121,7 +128,7 @@ class SensorParameterSource(ImportedConceptScheme):
                 param = SensorParameter.objects.get(uri=str(c))
                 #sensor.save()
             except Exception as e:
-                print "Could not process parameters sensed by sensor %s , %s " % (c,e)
+                logger.info ("Could not process parameters sensed by sensor %s , %s " % (c,e))
 
                 
                 
@@ -148,7 +155,7 @@ class GMLDict(ImportedConceptScheme):
         self.savedgraph = self.extract_gmx_as_skos(tree, map)    
         scheme_obj = self.importSchemes(self.get_graph(),self.target_scheme, self.force_refresh)
             # update any references to imported schemes
-            # print(self.schemes.all())
+            # logger.info(self.schemes.all())
 
         # now SKOS imported should find graph as if parsed from RDF
         kwargs['force_insert']=False
@@ -214,7 +221,7 @@ class GMLDict(ImportedConceptScheme):
                 except:
                     desc = id
                 graph.add ( (duri, RDFSLABEL_NODE , Literal(desc) ) )
-            #print codelist.find('./gml:description',namespaces=nsmap).text
+            #logger.info codelist.find('./gml:description',namespaces=nsmap).text
         return graph
        
     def get_id(self,uribase,node,nsmap, needuri=True): 

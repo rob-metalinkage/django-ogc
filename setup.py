@@ -8,7 +8,7 @@ except ImportError:
     ez_setup.use_setuptools()
     from setuptools import setup, find_packages
 
-VERSION = '0.1'
+VERSION = '0.2'
 
 import os
 def read(fname):
@@ -26,7 +26,7 @@ setup(
     long_description=read('README.md'),
     zip_safe=False,
     install_requires = ['django-skosxl',
-                        'django-rdf_io',
+                        'django-rdf_io>=0.4',
                         'lxml', 'django-smuggler'
                         ]
 
