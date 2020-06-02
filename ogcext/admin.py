@@ -50,8 +50,7 @@ admin.site.register(DummyModel, UtilitiesAdmin)
 
         
 class AppSchemaAdmin(ImportedResourceAdmin):
-    actions= ['publish_options', ]
-
+    resourcetype = 'appschema'
     def get_changeform_initial_data(self, request):
         defaults= {'resource_type': TYPE_MODEL}
         try:
@@ -60,7 +59,7 @@ class AppSchemaAdmin(ImportedResourceAdmin):
             pass
         try:
             # import pdb; pdb.set_trace()
-            defaults['target_repo'] = ServiceBinding.objects.get(title='AppSchema inferencing')
+            defaults['target_repo'] = ServiceBinding.objects.get(title='APPSCHEMA load source to inferencer')
         except:
             pass
         return defaults
@@ -70,26 +69,6 @@ class AppSchemaAdmin(ImportedResourceAdmin):
         # import pdb; pdb.set_trace()
         return  AppSchema.objects.all() # App.filter(Q(subtype=ContentType.objects.get_for_model(AppSchema) ))   
 
-    def publish_options(self,request,queryset):
-        """Batch publish with a set of mode options"""
-        if 'apply' in request.POST:
-            # The user clicked submit on the intermediate form.
-            # Perform our update action:
-            if request.POST.get('mode') == "CANCEL" :
-                self.message_user(request,
-                              "Cancelled publish action")
-            else:
-                checkuri = 'checkuri' in request.POST
-                logfile= publish_set_action(queryset,'appschema',check=checkuri,mode=request.POST.get('mode'))
-                self.message_user(request,
-                              mark_safe('started publishing in {} mode for {} schemes at <A HREF="{}" target="_log">{}</A>'.format(request.POST.get('mode'),queryset.count(),logfile,logfile) ) )
-            return HttpResponseRedirect(request.get_full_path())
-        return render(request,
-                      'admin/admin_publish.html',
-                      context={'schemes':queryset, 
-                        'pubvars': ConfigVar.getvars('PUBLISH') ,
-                        'reviewvars': ConfigVar.getvars('REVIEW') ,
-                        })
 
         
 admin.site.register(AppSchema, AppSchemaAdmin)
