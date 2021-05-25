@@ -106,7 +106,7 @@ def loaddocreg(req):
             if doc.get('contributor') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=contributor, value=doc['contributor'] )
             if doc.get('date') : 
-                ConceptMeta.objects.get_or_create(subject=d, metaprop=specdate, value= '"{}"^^xsd:date'.format(doc['date'])
+                ConceptMeta.objects.get_or_create(subject=d, metaprop=specdate, value= '"{}"^^xsd:date'.format(doc['date']))
             if doc.get('URL') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=seealso, value=doc['URL'].join(('<','>'))  )
             if doc.get('alternative') and  doc.get('alternative') != doc['title']:
