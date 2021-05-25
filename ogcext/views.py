@@ -60,7 +60,7 @@ def loaddocreg(req):
 
     creator = GenericMetaProp.objects.get(uri='http://purl.org/dc/elements/1.1/creator')
     contributor =GenericMetaProp.objects.get(uri= 'http://purl.org/dc/elements/1.1/contributor')
-    specdate =GenericMetaProp.objects.get(uri= 'http://purl.org/dc/elements/1.1/date')
+    specdate =GenericMetaProp.objects.get(uri= 'http://purl.org/dc/terms/created')
     seealso = GenericMetaProp.objects.get(uri= 'http://www.w3.org/2000/01/rdf-schema#seeAlso')
     Namespace.objects.get_or_create(prefix='policy',uri="http://www.opengis.net/def/metamodel/ogc-na/")
     doctype,created = GenericMetaProp.objects.get_or_create(uri= 'http://www.opengis.net/def/metamodel/ogc-na/doctype')     
@@ -90,27 +90,27 @@ def loaddocreg(req):
         if statsonly :
             uri[ doc['URI'] ] = True
         else:
-            (d, created) = Concept.objects.get_or_create(term=slugify(doc['identifier']), definition=strip_tags(doc['description']).translate( {ord(c):None for c in '\n\t\r' }).encode('ascii',errors='ignore'), pref_label=doc['title'].encode('ascii',errors='ignore') , scheme=docscheme)
-            (collection,created) = Collection.objects.get_or_create(scheme=docscheme , pref_label=doc['type'], uri="/".join((tgt,doc['type'].lower())))
-            ConceptMeta.objects.get_or_create(subject=d, metaprop=doctype, value="".join(("<http://www.opengis.net/def/doc-type/",doc['type'].lower(),">") ) )
+            (d, created) = Concept.objects.get_or_create(term=slugify(doc['identifier']), definition=strip_tags(doc['description']).translate( {ord(c):None for c in '\n\t\r' }).encode('ascii',errors='ignore').decode(), pref_label=doc['title'].encode('ascii',errors='ignore').decode() , scheme=docscheme)
+            (collection,created) = Collection.objects.get_or_create(scheme=docscheme , pref_label=doc['type'].encode('ascii',errors='ignore').decode(), uri="/".join((tgt,doc['type'].encode('ascii',errors='ignore').decode().lower())))
+            ConceptMeta.objects.get_or_create(subject=d, metaprop=doctype, value="".join(("<http://www.opengis.net/def/doc-type/",doc['type'].encode('ascii',errors='ignore').decode().lower(),">") ) )
             
 #            CollectionMember.objects.get_or_create(collection=topcollection, subcollection=collection)
             CollectionMember.objects.get_or_create(collection=collection, concept=d)
      
-            Notation.objects.get_or_create(concept=d,code=doc.get('identifier'), codetype="http://www.opengis.net/def/metamodel/ogc-na/doc_no")
-            Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['identifier'].encode('utf-8'))
+            Notation.objects.get_or_create(concept=d,code=doc.get('identifier').encode('ascii',errors='ignore').decode(), codetype="http://www.opengis.net/def/metamodel/ogc-na/doc_no")
+            Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['identifier'].encode('utf-8').decode())
             #if doc.get('spec_id') :
             #    Notation.objects.get_or_create(concept=d,code=doc.get('spec_id'), codetype="http://www.opengis.net/def/metamodel/ogc-na/cite_spec_id")
             if doc.get('creator') : 
-                ConceptMeta.objects.get_or_create(subject=d, metaprop=creator, value=doc['creator'] )
+                ConceptMeta.objects.get_or_create(subject=d, metaprop=creator, value=doc['creator'].encode('utf-8').decode() )
             if doc.get('contributor') : 
-                ConceptMeta.objects.get_or_create(subject=d, metaprop=contributor, value=doc['contributor'] )
+                ConceptMeta.objects.get_or_create(subject=d, metaprop=contributor, value=doc['contributor'].encode('utf-8').decode() )
             if doc.get('date') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=specdate, value= '"{}"^^xsd:date'.format(doc['date']))
             if doc.get('URL') : 
-                ConceptMeta.objects.get_or_create(subject=d, metaprop=seealso, value=doc['URL'].join(('<','>'))  )
+                ConceptMeta.objects.get_or_create(subject=d, metaprop=seealso, value=doc['URL'].encode('ascii',errors='ignore').decode().join(('<','>'))  )
             if doc.get('alternative') and  doc.get('alternative') != doc['title']:
-                Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['alternative'].encode('ascii',errors='ignore'))
+                Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['alternative'].encode('ascii',errors='ignore').decode())
                 
     response.write( '<A HREF="/admin/skosxl/scheme/%d/change/" target="_new">Show Scheme' % ( docscheme.id, ) )
     return response
