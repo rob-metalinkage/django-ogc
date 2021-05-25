@@ -60,6 +60,7 @@ def loaddocreg(req):
 
     creator = GenericMetaProp.objects.get(uri='http://purl.org/dc/elements/1.1/creator')
     contributor =GenericMetaProp.objects.get(uri= 'http://purl.org/dc/elements/1.1/contributor')
+    specdate =GenericMetaProp.objects.get(uri= 'http://purl.org/dc/elements/1.1/date')
     seealso = GenericMetaProp.objects.get(uri= 'http://www.w3.org/2000/01/rdf-schema#seeAlso')
     Namespace.objects.get_or_create(prefix='policy',uri="http://www.opengis.net/def/metamodel/ogc-na/")
     doctype,created = GenericMetaProp.objects.get_or_create(uri= 'http://www.opengis.net/def/metamodel/ogc-na/doctype')     
@@ -98,12 +99,14 @@ def loaddocreg(req):
      
             Notation.objects.get_or_create(concept=d,code=doc.get('identifier'), codetype="http://www.opengis.net/def/metamodel/ogc-na/doc_no")
             Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['identifier'].encode('utf-8'))
-            if doc.get('spec_id') :
-                Notation.objects.get_or_create(concept=d,code=doc.get('spec_id'), codetype="http://www.opengis.net/def/metamodel/ogc-na/cite_spec_id")
+            #if doc.get('spec_id') :
+            #    Notation.objects.get_or_create(concept=d,code=doc.get('spec_id'), codetype="http://www.opengis.net/def/metamodel/ogc-na/cite_spec_id")
             if doc.get('creator') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=creator, value=doc['creator'] )
             if doc.get('contributor') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=contributor, value=doc['contributor'] )
+            if doc.get('date') : 
+                ConceptMeta.objects.get_or_create(subject=d, metaprop=specdate, value= '"{}"^^xsd:date'.format(doc['date'])
             if doc.get('URL') : 
                 ConceptMeta.objects.get_or_create(subject=d, metaprop=seealso, value=doc['URL'].join(('<','>'))  )
             if doc.get('alternative') and  doc.get('alternative') != doc['title']:
