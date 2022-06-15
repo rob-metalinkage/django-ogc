@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 
 try:
     from setuptools import setup, find_packages
@@ -8,9 +9,9 @@ except ImportError:
     ez_setup.use_setuptools()
     from setuptools import setup, find_packages
 
-VERSION = '0.2'
+VERSION = '0.3'
 
-import os
+
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 

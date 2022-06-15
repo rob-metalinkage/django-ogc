@@ -1,19 +1,18 @@
 # # -*- coding:utf-8 -*-
-from skosxl.models import *
-from django.template import RequestContext
-from django.shortcuts import get_object_or_404
+import json
+from importlib import import_module
+
+import requests
+from django.http import HttpResponse
+from django.utils.html import strip_tags
 # deprecated since 1.3
 # from django.views.generic.list_detail import object_list
 # but not used anyway?
 # if needed.. from django.views.generic import ListView
 from django.utils.text import slugify
-from django.utils.html import strip_tags
-from django.http import HttpResponse
-import json
-import requests
-
-
-from importlib import import_module
+from rdf_io.models import GenericMetaProp, Namespace
+from skosxl.models import Concept, Collection, Scheme, ConceptMeta, CollectionMember, Notation, Label, SemRelation, \
+    REL_TYPES
 
 
 def loadinit(req) :
@@ -23,7 +22,7 @@ def loadinit(req) :
     messages = {}
     if req.GET.get('pdb') :
         import pdb; pdb.set_trace()
-    url_base = req.build_absolute_uri("/");
+    url_base = req.build_absolute_uri("/")
     loadlist = import_module('ogcext.fixtures.loadlist', 'ogcext.fixtures')
     for cfgname in loadlist.INITIAL_FIXTURES :
         cm = import_module("".join(('ogcext.fixtures.',cfgname)), 'dataweb.fixtures')
@@ -67,9 +66,9 @@ def loaddocreg(req):
     
     ( docscheme, created ) = Scheme.objects.get_or_create(uri=tgt, defaults={'pref_label':'OGC Documents' , 'changenote': 'loaded from %s ' % (src ,) , 'definition':'OGC document register with annotations and links'} )  
     if ( not created ) : 
-        Concept.objects.filter(scheme=docscheme).delete()
         Collection.objects.filter(scheme=docscheme).delete()
-    
+        Concept.objects.filter(scheme=docscheme).delete()
+
 #    ( topcollection, created ) = Collection.objects.get_or_create(scheme=docscheme, pref_label='Document lists by document type'  , uri="/".join((tgt,"")) ) 
 
     
@@ -83,6 +82,8 @@ def loaddocreg(req):
     for num,doc in enumerate(docs_dict.values()):
         if num == max:
             break
+        if doc['type'] == 'CC':
+            continue
         if publishers.get(doc['publisher']) :
             publishers[doc['publisher']] = publishers[doc['publisher']] +1 
         else:
@@ -90,13 +91,24 @@ def loaddocreg(req):
         if statsonly :
             uri[ doc['URI'] ] = True
         else:
-            (d, created) = Concept.objects.get_or_create(term=slugify(doc['identifier']), definition=strip_tags(doc['description']).translate( {ord(c):None for c in '\n\t\r' }).encode('ascii',errors='ignore').decode(), pref_label=doc['title'].encode('ascii',errors='ignore').decode() , scheme=docscheme)
-            (collection,created) = Collection.objects.get_or_create(scheme=docscheme , pref_label=doc['type'].encode('ascii',errors='ignore').decode(), uri="/".join((tgt,doc['type'].encode('ascii',errors='ignore').decode().lower())))
+            
+            # create or locate an upper concept and a Collection view to group by document type 
+            (upper,created) = Concept.objects.get_or_create(scheme=docscheme , pref_label=doc['type'].encode('ascii',errors='ignore').decode(), uri="/".join((tgt,doc['type'].encode('ascii',errors='ignore').decode().lower())))
+            (collection,created) = Collection.objects.get_or_create(scheme=docscheme , pref_label=doc['type'].encode('ascii',errors='ignore').decode(), uri="/".join((tgt,doc['type'].encode('ascii',errors='ignore').decode().lower(),'')))
+            # create the concept
+            (d, created) = Concept.objects.get_or_create(
+                term=slugify(doc['identifier']),
+                definition=strip_tags(doc['description']).translate( {ord(c):None for c in '\n\t\r' }).encode('ascii',errors='ignore').decode(), 
+                pref_label=doc['title'].encode('ascii',errors='ignore').decode() ,
+                scheme=docscheme)
+            
             ConceptMeta.objects.get_or_create(subject=d, metaprop=doctype, value="".join(("<http://www.opengis.net/def/doc-type/",doc['type'].encode('ascii',errors='ignore').decode().lower(),">") ) )
             
+            # add to collection and as narrower relation
 #            CollectionMember.objects.get_or_create(collection=topcollection, subcollection=collection)
             CollectionMember.objects.get_or_create(collection=collection, concept=d)
-     
+            SemRelation.objects.get_or_create(origin_concept=d, target_concept=upper, rel_type=REL_TYPES.broader)
+
             Notation.objects.get_or_create(concept=d,code=doc.get('identifier').encode('ascii',errors='ignore').decode(), codetype="http://www.opengis.net/def/metamodel/ogc-na/doc_no")
             Label.objects.get_or_create(concept=d, label_type=1 , label_text=doc['identifier'].encode('utf-8').decode())
             #if doc.get('spec_id') :

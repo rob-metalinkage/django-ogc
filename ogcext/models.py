@@ -29,7 +29,7 @@ except ImportError:
     from urlparse import urlparse
 #   from urllib.request import urlopen
     
-from lxml import etree, objectify
+from lxml import etree
 from rdflib import Graph, URIRef, Literal, Namespace
 # from skosxl.models import *
 

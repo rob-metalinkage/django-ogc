@@ -1,8 +1,5 @@
 
-from rdf_io.models import Namespace, ObjectType,ObjectMapping,AttributeMapping , ChainedMapping 
-from django.contrib.contenttypes.models import ContentType
-from skosxl.models import Scheme
-
+from rdf_io.models import Namespace, ObjectType,ObjectMapping,AttributeMapping
 
 
 def loaddata(url_base):

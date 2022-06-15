@@ -1,17 +1,17 @@
 #-*- coding:utf-8 -*-
+from django.conf.urls import url
 from django.contrib import admin
-from ogcext.models import *
-from skosxl.admin import *
-from django.utils.translation import ugettext_lazy as _
-from ogcext.views import loaddocreg, loadinit
-from ogcext.models import AppSchema
-from django.conf.urls import url, include
-from smuggler.views import dump_app_data, dump_data, dump_model_data, load_data
-
+from rdf_io.admin import ImportedResourceAdmin
+# from rdf_io.models import ConfigVar,TYPE_MODEL,ServiceBinding
+from rdf_io.models import ConfigVar, ServiceBinding
 from rdf_io.views import *
-#from rdf_io.models import ConfigVar,TYPE_MODEL,ServiceBinding
-from rdf_io.models import ConfigVar,ServiceBinding
-from rdf_io.admin import ImportedResourceAdmin,  publish_set_action
+from skosxl.admin import *
+
+from ogcext.models import *
+from ogcext.models import AppSchema
+from ogcext.views import loaddocreg
+
+
 #
 # something like this should have allowed smuggler function to be visible on admin site.... but no joy :-(
 #
